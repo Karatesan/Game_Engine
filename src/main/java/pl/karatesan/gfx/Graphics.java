@@ -1,7 +1,7 @@
 package pl.karatesan.gfx;
 
+import javafx.animation.AnimationTimer;
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Pos;
@@ -18,31 +18,33 @@ import java.time.Duration;
 
 public class Graphics extends Application {
 
-
     private int windowWidth;
     private int windowHeight;
     private int targetFps = 60;
     private long targetFrameTimeNano = Duration.ofSeconds(1).toNanos() / targetFps;
     private DoubleProperty fpsProperty;
-    private double deltaTime;
-    private boolean showFps = false;
     private Pane root;
     private String windowName;
     private ObjectManager objectManager;
-    private static ObjectManager staticObjectManager; // Temporary static storage
+    private long previousTimeStamp = -1;
 
     public Graphics() {
-        this.fpsProperty = new SimpleDoubleProperty(0.0);;
+        this.fpsProperty = new SimpleDoubleProperty(0.0);
         root = new Pane();
         windowWidth = 800;
         windowHeight = 600;
     }
 
     @Override
+    public void init() throws Exception {
+        super.init();
+        objectManager = new ObjectManager();
+        BallsInitializer initializer = new BallsInitializer();
+        initializer.initialize(objectManager, this);
+    }
+
+    @Override
     public void start(Stage stage) throws Exception {
-        if (objectManager == null) {
-            objectManager = staticObjectManager;
-        }
 
         Label fpsMeter = new Label("");
         fpsMeter.textProperty().bind(fpsProperty.asString("%.2f"));
@@ -50,11 +52,11 @@ public class Graphics extends Application {
 
         VBox fpsMeterBox = new VBox(fpsMeter);
         fpsMeterBox.setAlignment(Pos.BASELINE_LEFT);
-        if (showFps)
-            root.getChildren().add(fpsMeterBox);
-        root.getChildren().add(objectManager.getMap().getNode());
-        root.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, null, null)));
 
+        root.getChildren().add(fpsMeterBox);
+        root.getChildren().add(objectManager.getMap().getNode());
+
+        root.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, null, null)));
         objectManager.getObjects().forEach(o -> root.getChildren().add(o.getNode()));
         Scene scene = new Scene(root, windowWidth, windowHeight);
         scene.setFill(Color.BLACK);
@@ -62,29 +64,33 @@ public class Graphics extends Application {
         stage.setScene(scene);
         stage.show();
 
-        Thread gameThread = new Thread(() -> {
-            while (true) {
-                long startFrameTime = System.nanoTime();
-                if(objectManager.getObjects().get(0) == root.getChildren().get(0)){
-                    System.out.println("dasdasda");
-                }
-                // Game logic (runs on game thread)
-                objectManager.updateObjects(deltaTime);
-
-
-                fixFrameTime(startFrameTime);
-
-                deltaTime = System.nanoTime() - startFrameTime;
-                double fps = 1000.0 / (deltaTime / 1_000_000.0);
-                Platform.runLater(() -> fpsProperty.setValue(fps));
-            }
-        });
-        gameThread.setDaemon(true); // Stops thread when app closes
-        gameThread.start();
+        startGameLoop();
     }
 
-    public void startEngine(){
+    public static void startEngine() {
         launch();
+    }
+
+    private void startGameLoop() {
+        AnimationTimer gameLoop = new AnimationTimer() {
+
+            @Override
+            public void handle(long now) {
+                if (previousTimeStamp < 0) {
+                    previousTimeStamp = now;
+                    return;
+                }
+                long deltaTime = now - previousTimeStamp;
+                previousTimeStamp = now;
+
+                System.out.println(deltaTime / 1000000.0);
+                // Game logic (runs on game thread)
+                objectManager.updateObjects(deltaTime);
+                double fps = 1 / (deltaTime / 1_000_000_000.0);
+                fpsProperty.set(fps);
+            }
+        };
+        gameLoop.start();
     }
 
     void fixFrameTime(long startFrameTime) {
@@ -106,19 +112,15 @@ public class Graphics extends Application {
         }
     }
 
-    public void showFps(boolean show){
-        this.showFps = show;
-    }
-
-    public void setWindowWidth(int w){
+    public void setWindowWidth(int w) {
         windowWidth = w;
     }
 
-    public void setWindowHeight(int h){
+    public void setWindowHeight(int h) {
         windowHeight = h;
     }
 
-    public void setWindowName(String name){
+    public void setWindowName(String name) {
         windowName = name;
     }
 
@@ -146,10 +148,6 @@ public class Graphics extends Application {
         this.targetFrameTimeNano = targetFrameTimeNano;
     }
 
-    public void setShowFps(boolean showFps) {
-        this.showFps = showFps;
-    }
-
     public String getWindowName() {
         return windowName;
     }
@@ -158,8 +156,8 @@ public class Graphics extends Application {
         return objectManager;
     }
 
-    public void setObjectManager(ObjectManager objectManager) {
-        this.objectManager = objectManager;
-        staticObjectManager = objectManager;
-    }
+//    public void setObjectManager(ObjectManager objectManager) {
+//        this.objectManager = objectManager;
+//        staticObjectManager = objectManager;
+//    }
 }

@@ -3,7 +3,7 @@ package pl.karatesan.shapes;
 import javafx.scene.shape.Circle;
 import pl.karatesan.Vector2D;
 
-public class BallFx extends Circle implements GameObject {
+public class BallFx extends Circle implements GameObject<BallFx> {
     private Vector2D velocity;
 
     private static class ClipResult {
@@ -32,12 +32,12 @@ public class BallFx extends Circle implements GameObject {
     }
 
     @Override
-    public void update(double deltaTime, GameObject map) {
+    public void update(double deltaTime, GameObject<BallFx> map) {
         move(deltaTime, map);
     }
 
     @Override
-    public Circle getNode() {
+    public BallFx getNode() {
         return this;
     }
 
@@ -73,7 +73,7 @@ public class BallFx extends Circle implements GameObject {
                         velocity.y - 2 * dotProduct * normal.y);
     }
 
-    public void move(double deltaTime, GameObject map) {
+    public void move(double deltaTime, GameObject<BallFx> map) {
         double factor = deltaTime / 1_000_000_000.0;
         Vector2D newPosition = new Vector2D(
                 getCenterX() + velocity.x * factor,

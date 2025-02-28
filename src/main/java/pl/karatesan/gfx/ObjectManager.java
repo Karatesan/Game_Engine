@@ -1,7 +1,6 @@
 package pl.karatesan.gfx;
 
-
-import javafx.scene.Node;
+import pl.karatesan.shapes.BallFx;
 import pl.karatesan.shapes.GameObject;
 
 import java.util.ArrayList;
@@ -9,8 +8,7 @@ import java.util.List;
 
 public class ObjectManager {
     private List<GameObject<?>> objects = new ArrayList<>();
-    private GameObject<?> map;
-
+    private GameObject<BallFx> map;
 
     public void updateObjects(double deltaTime) {
         objects.forEach(o -> o.update(deltaTime, map));
