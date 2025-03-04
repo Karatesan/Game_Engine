@@ -27,6 +27,7 @@ public class Graphics extends Application {
     private String windowName;
     private ObjectManager objectManager;
     private long previousTimeStamp = -1;
+    private static GameInitializer initializer;
 
     public Graphics() {
         this.fpsProperty = new SimpleDoubleProperty(0.0);
@@ -39,7 +40,6 @@ public class Graphics extends Application {
     public void init() throws Exception {
         super.init();
         objectManager = new ObjectManager();
-        BallsInitializer initializer = new BallsInitializer();
         initializer.initialize(objectManager, this);
     }
 
@@ -156,8 +156,7 @@ public class Graphics extends Application {
         return objectManager;
     }
 
-//    public void setObjectManager(ObjectManager objectManager) {
-//        this.objectManager = objectManager;
-//        staticObjectManager = objectManager;
-//    }
+    public static void setInitializer(GameInitializer init){
+        initializer = init;
+    }
 }
